@@ -1,8 +1,24 @@
+/*
+*    This program is free software: you can redistribute it and/or modify
+*    it under the terms of the GNU General Public License as published by
+*    the Free Software Foundation, either version 2 of the License, or
+*    (at your option) any later version.
+*
+*    This program is distributed in the hope that it will be useful,
+*    but WITHOUT ANY WARRANTY.  See the
+*    GNU General Public License for more details.
+*
+*    You should have received a copy of the GNU General Public License
+*    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+*    Copyright © 2012 Shridhar Shah
+*/
 #include <WProgram.h>
 
 #include <Servo.h> 
 #include <ros.h>
-#include <std_msgs/Float64.h>
+//#include <std_msgs/Float64.h>
+#include <geometry_msgs/Point.h>
 
 #define STBY 6
 #define B_PWM 3
@@ -24,108 +40,122 @@ Servo ServoR;
 int commandL = 0;
 int commandR = 0;
 
-void messageCbl( const std_msgs::Float64& msg){
-  servoL = msg.data;
- // digitalWrite(13, HIGH-digitalRead(13));   // blink the led
- // command = cmd_msgL.data;
- commandL = servoL;
-  if(commandL == 0.0)
-  {
-  // ServoL.detach();
-  digitalWrite(B_IN1, LOW);   // 
-  digitalWrite(B_IN2, LOW);   // 
-  digitalWrite(B_PWM, HIGH);   // 
-  digitalWrite(STBY, HIGH);   // STYBY - HIGH
- // digitalWrite(12, LOW);
- // digitalWrite(10, LOW);
- // digitalWrite(13, HIGH-digitalRead(13));  //toggle led 
- // digitalWrite(9, HIGH);
-  //digitalWrite(13, HIGH-digitalRead(13));  //toggle led 
- //delay(300);
+void setPwmFrequency(int pin, int divisor) {
+  byte mode;
+  if(pin == 5 || pin == 6 || pin == 9 || pin == 10) {
+    switch(divisor) {
+      case 1: mode = 0x01; break;
+      case 8: mode = 0x02; break;
+      case 64: mode = 0x03; break;
+      case 256: mode = 0x04; break;
+      case 1024: mode = 0x05; break;
+      default: return;
+    }
+    if(pin == 5 || pin == 6) {
+      TCCR0B = TCCR0B & 0b11111000 | mode;
+    } else {
+      TCCR1B = TCCR1B & 0b11111000 | mode;
+    }
+  } else if(pin == 3 || pin == 11) {
+    switch(divisor) {
+      case 1: mode = 0x01; break;
+      case 8: mode = 0x02; break;
+      case 32: mode = 0x03; break;
+      case 64: mode = 0x04; break;
+      case 128: mode = 0x05; break;
+      case 256: mode = 0x06; break;
+      case 1024: mode = 0x7; break;
+      default: return;
+    }
+    TCCR2B = TCCR2B & 0b11111000 | mode;
   }
-  else if (commandL > 0)
-  { 
-  // ServoL.attach(B_PWM);
-  digitalWrite(B_IN2, HIGH); 
-  digitalWrite(B_IN1, LOW);
-  digitalWrite(STBY, HIGH);   // STYBY - HIGH
-  analogWrite(B_PWM, commandL);
- // ServoL.write(commandL);  
-  //analogWrite(9, command);    
-  //servoL.write(cmd_msgL.data); //set servo angle, should be from 0-180  
-  //servoR.write(cmd_msgL.data); //set servo angle, should be from 0-180  
-  //digitalWrite(13, HIGH-digitalRead(13));  //toggle led 
-  }
- else
- {
- // ServoL.attach(B_PWM);
-  digitalWrite(B_IN2, LOW); 
-  digitalWrite(B_IN1, HIGH);
-  digitalWrite(STBY, HIGH);   // STYBY - HIGH
-  analogWrite(B_PWM, -commandL);
-  //ServoL.write(-commandL); 
-   
- }
-   
-  //flush(cmd_msgL);
-  
 }
 
 
-
-void messageCbr( const std_msgs::Float64& msg){
-  servoR = msg.data;
- // digitalWrite(13, HIGH-digitalRead(13));   // blink the led
- // command = cmd_msgL.data;
- commandR = servoR;
-  if(commandR == 0.0)
+void messageCb( const geometry_msgs::Point& msg){
+  servoL = msg.x;
+  servoR = msg.y;
+  commandL = servoL;
+  commandR = servoR;
+  if(commandL == 0.0)
   {
-   // ServoR.detach();
- // digitalWrite(7, LOW);   // 
- // digitalWrite(8, LOW);   // 
- // digitalWrite(6, HIGH);   // 
-  digitalWrite(STBY, HIGH);   // STYBY - HIGH
-  digitalWrite(A_IN1, LOW);
-  digitalWrite(A_IN2, LOW);
-  //digitalWrite(13, HIGH-digitalRead(13));  //toggle led 
-  digitalWrite(A_PWM, HIGH);
-  //digitalWrite(13, HIGH-digitalRead(13));  //toggle led 
- //delay(300);
+    // ServoL.detach();
+    digitalWrite(B_IN1, LOW);   // 
+    digitalWrite(B_IN2, LOW);   // 
+    digitalWrite(B_PWM, HIGH);   // 
+    digitalWrite(STBY, HIGH);   // STYBY - HIGH
   }
-  else if(commandR > 0)
+  else if (commandL > 0)
   { 
-    
-  //  ServoR.attach(A_PWM);
-  digitalWrite(A_IN2, LOW); 
-  digitalWrite(A_IN1, HIGH);
-  digitalWrite(STBY, HIGH);   // STYBY - HIGH
-  //analogWrite(6, command);   
-  analogWrite(A_PWM, commandR);
- // ServoR.write(commandR);  
-  //servoL.write(cmd_msgL.data); //set servo angle, should be from 0-180  
-  //servoR.write(cmd_msgL.data); //set servo angle, should be from 0-180  
-  //digitalWrite(13, HIGH-digitalRead(13));  //toggle led 
+    // ServoL.attach(B_PWM);
+    digitalWrite(B_IN2, HIGH); 
+    digitalWrite(B_IN1, LOW);
+    digitalWrite(STBY, HIGH);   // STYBY - HIGH
+    analogWrite(B_PWM, commandL);
+    // ServoL.write(commandL);  
+    //analogWrite(9, command);    
+    //servoL.write(cmd_msgL.data); //set servo angle, should be from 0-180  
+    //servoR.write(cmd_msgL.data); //set servo angle, should be from 0-180  
+    //digitalWrite(13, HIGH-digitalRead(13));  //toggle led 
   }
   else
   {
-  //ServoR.attach(A_PWM);
-  digitalWrite(A_IN2, HIGH); 
-  digitalWrite(A_IN1, LOW);
-  digitalWrite(STBY, HIGH);   // STYBY - HIGH
-  //analogWrite(6, command);   
-  analogWrite(A_PWM, -commandR);
- // ServoR.write(-commandR); 
-    
-    
-    
+    // ServoL.attach(B_PWM);
+    digitalWrite(B_IN2, LOW); 
+    digitalWrite(B_IN1, HIGH);
+    digitalWrite(STBY, HIGH);   // STYBY - HIGH
+    analogWrite(B_PWM, -commandL);
+    //ServoL.write(-commandL); 
+
   }
-  
+
+  //flush(cmd_msgL);
+
+
+
+  if(commandR == 0.0)
+  {
+    // ServoR.detach();
+    digitalWrite(STBY, HIGH);   // STYBY - HIGH
+    digitalWrite(A_IN1, LOW);
+    digitalWrite(A_IN2, LOW);
+    digitalWrite(A_PWM, HIGH);
+
+  }
+  else if(commandR > 0)
+  { 
+
+    //  ServoR.attach(A_PWM);
+    digitalWrite(A_IN2, LOW); 
+    digitalWrite(A_IN1, HIGH);
+    digitalWrite(STBY, HIGH);   // STYBY - HIGH
+    //analogWrite(6, command);   
+    analogWrite(A_PWM, commandR);
+    // ServoR.write(commandR);  
+    //servoL.write(cmd_msgL.data); //set servo angle, should be from 0-180  
+    //servoR.write(cmd_msgL.data); //set servo angle, should be from 0-180  
+    //digitalWrite(13, HIGH-digitalRead(13));  //toggle led 
+  }
+  else
+  {
+    //ServoR.attach(A_PWM);
+    digitalWrite(A_IN2, HIGH); 
+    digitalWrite(A_IN1, LOW);
+    digitalWrite(STBY, HIGH);   // STYBY - HIGH
+    //analogWrite(6, command);   
+    analogWrite(A_PWM, -commandR);
+    // ServoR.write(-commandR); 
+
+
+
+  }
+
 }
 
 
 //std_msgs::Float64 test;
-ros::Subscriber<std_msgs::Float64> sl("servoleft", &messageCbl);
-ros::Subscriber<std_msgs::Float64> sr("servoright", &messageCbr);
+ros::Subscriber<geometry_msgs::Point> servocmd("servocommand", &messageCb);
+//ros::Subscriber<std_msgs::Float64> sr("servoright", &messageCbr);
 //ros::Publisher p("chatter", &test);
 
 void setup(){
@@ -139,12 +169,12 @@ void setup(){
   pinMode(B_PWM, OUTPUT);  // 
 
   nh.initNode();
-//  nh.advertise(p);
-  nh.subscribe(sl);
-  nh.subscribe(sr);  
-//  servoL.attach(6); //attach it to pin 9
-//  servoR.attach(9); //attach it to pin 9
-  
+  //  nh.advertise(p);
+  nh.subscribe(servocmd);
+  //  nh.subscribe(sr);  
+  //  servoL.attach(6); //attach it to pin 9
+  //  servoR.attach(9); //attach it to pin 9
+
   digitalWrite(B_IN2, LOW);   // // AIN1 - LOW AIN2 - HIGH (CC rotation)
   digitalWrite(B_IN1, LOW);   // // AIN2
   digitalWrite(B_PWM, LOW);   // 
@@ -153,12 +183,16 @@ void setup(){
   digitalWrite(A_IN2, LOW);  // BIN1
   digitalWrite(A_PWM, LOW);
   
+  setPwmFrequency(3, 256);
+  setPwmFrequency(9, 256);
 }
 
 void loop(){
- // test.data = x;
- // p.publish( &test );
-  nh.spinOnce();
-  delay(20);
+  // test.data = x;
+  // p.publish( &test );
   
+  nh.spinOnce();
+  delay(1);
+
 }
+
