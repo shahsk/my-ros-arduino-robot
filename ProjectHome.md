@@ -1,0 +1,1 @@
+The project is about building a small Arduino controlled robot, which is controlled wirelessly using XBee. The open source software Robot Operating System(ROS) is used for communication and sending commands. Schematic diagram, code etc are provided.
